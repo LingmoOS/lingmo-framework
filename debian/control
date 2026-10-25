@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Lingmo OS Team <team@lingmo.org>
 Build-Depends: cmake,
                debhelper-compat (= 14),
-               lingmo-toolkit,
+               lingmo-sdk,
                libicu-dev,
                libpng-dev,
                libsystemd-dev,
@@ -16,7 +16,7 @@ Homepage: https://github.com/lingmoos/lingmo-framework
 
 Package: lingmo-framework
 Architecture: any
-Depends: lingmo-toolkit,
+Depends: lingmo-sdk,
          bluez,
          gnome-keyring,
          libpam-gnome-keyring,
