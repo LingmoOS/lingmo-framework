@@ -1,7 +1,7 @@
 # Clients of system services, one library per directory, linking only
-# the toolkit's base library. They form the CutefishClients package; a
+# the toolkit's base library. They form the LingmoClients package; a
 # consumer asks for them by directory name:
-#   find_package(CutefishClients REQUIRED COMPONENTS appearance)
+#   find_package(LingmoClients REQUIRED COMPONENTS appearance)
 #   target_link_libraries(app PRIVATE Lingmo::AppearanceClient)
 
 find_package(LingmoSDK REQUIRED)
@@ -17,12 +17,12 @@ function(lingmo_add_client name)
     lingmo_framework_add_library(lingmo-${name}-client
         TARGET ${arg_TARGET}
         MODULE ${name}
-        EXPORT CutefishClient${name}Targets
+        EXPORT LingmoClient${name}Targets
         SOURCES ${arg_SOURCES}
         HEADERS ${arg_HEADERS}
         PUBLIC_LIBRARIES Lingmo::SDKBase ${arg_LIBRARIES}
     )
-    lingmo_framework_export(CutefishClients CutefishClient${name}Targets)
+    lingmo_framework_export(LingmoClients LingmoClient${name}Targets)
 endfunction()
 
 file(GLOB client_directories LIST_DIRECTORIES true ${CMAKE_CURRENT_SOURCE_DIR}/*)
@@ -36,4 +36,4 @@ foreach(directory ${client_directories})
     endif()
 endforeach()
 
-lingmo_framework_add_package(CutefishClients)
+lingmo_framework_add_package(LingmoClients)
