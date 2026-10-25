@@ -12,7 +12,7 @@ endif()
 set(CMAKE_AUTOMOC OFF)
 set(CMAKE_AUTORCC OFF)
 
-find_package(LingmoToolkit REQUIRED)
+find_package(LingmoSDK REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 # Unicode case folding for name search and MIME glob matching, as the toolkit
@@ -70,7 +70,7 @@ lingmo_framework_add_library(lingmo-files
         url.cpp
         volume_manager.cpp
     HEADERS ${FILES_PUBLIC_HEADERS}
-    PUBLIC_LIBRARIES Lingmo::ToolkitBase Threads::Threads
+    PUBLIC_LIBRARIES Lingmo::SDKBase Threads::Threads
     PRIVATE_LIBRARIES PkgConfig::FilesIcu
 )
 target_compile_definitions(lingmo-files PRIVATE _FILE_OFFSET_BITS=64)
@@ -86,7 +86,7 @@ lingmo_framework_add_library(lingmo-files-thumbnails
         thumbnails/thumbnailers.cpp
         thumbnails/thumbnailers_p.h
     HEADERS thumbnails/thumbnail_cache.h
-    PUBLIC_LIBRARIES Lingmo::Files Lingmo::Toolkit
+    PUBLIC_LIBRARIES Lingmo::Files Lingmo::SDK
     PRIVATE_LIBRARIES PkgConfig::FilesPng
 )
 

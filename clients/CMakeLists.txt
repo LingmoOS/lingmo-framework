@@ -4,7 +4,7 @@
 #   find_package(CutefishClients REQUIRED COMPONENTS appearance)
 #   target_link_libraries(app PRIVATE Lingmo::AppearanceClient)
 
-find_package(LingmoToolkit REQUIRED)
+find_package(LingmoSDK REQUIRED)
 
 set(CUTEFISH_FRAMEWORK_CLIENTS "all" CACHE STRING
     "The clients/ directories to build: all, or a list of their names")
@@ -20,7 +20,7 @@ function(lingmo_add_client name)
         EXPORT CutefishClient${name}Targets
         SOURCES ${arg_SOURCES}
         HEADERS ${arg_HEADERS}
-        PUBLIC_LIBRARIES Lingmo::ToolkitBase ${arg_LIBRARIES}
+        PUBLIC_LIBRARIES Lingmo::SDKBase ${arg_LIBRARIES}
     )
     lingmo_framework_export(CutefishClients CutefishClient${name}Targets)
 endfunction()
