@@ -6,7 +6,7 @@
 
 find_package(LingmoSDK REQUIRED)
 
-set(CUTEFISH_FRAMEWORK_CLIENTS "all" CACHE STRING
+set(LINGMO_FRAMEWORK_CLIENTS "all" CACHE STRING
     "The clients/ directories to build: all, or a list of their names")
 
 # lingmo_add_client(<name> TARGET <Target> SOURCES ... HEADERS ... [LIBRARIES ...])
@@ -31,7 +31,7 @@ foreach(directory ${client_directories})
     if(NOT EXISTS ${directory}/CMakeLists.txt)
         continue()
     endif()
-    if(CUTEFISH_FRAMEWORK_CLIENTS STREQUAL "all" OR name IN_LIST CUTEFISH_FRAMEWORK_CLIENTS)
+    if(LINGMO_FRAMEWORK_CLIENTS STREQUAL "all" OR name IN_LIST LINGMO_FRAMEWORK_CLIENTS)
         add_subdirectory(${name})
     endif()
 endforeach()
