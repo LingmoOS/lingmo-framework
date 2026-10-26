@@ -1,8 +1,19 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
-find_dependency(CutefishToolkit)
+find_dependency(LingmoSDK)
 find_dependency(Threads)
 
-include("${CMAKE_CURRENT_LIST_DIR}/CutefishFilesTargets.cmake")
-check_required_components(CutefishFiles)
+include("${CMAKE_CURRENT_LIST_DIR}/LingmoFilesTargets.cmake")
+
+# LingmoFilesTargets.cmake exports targets as Lingmo::lingmo-files and
+# Lingmo::lingmo-files-thumbnails (NAMESPACE Lingmo::). Provide the canonical
+# short aliases that downstream CMakeLists use.
+if(TARGET Lingmo::lingmo-files AND NOT TARGET Lingmo::Files)
+    add_library(Lingmo::Files ALIAS Lingmo::lingmo-files)
+endif()
+if(TARGET Lingmo::lingmo-files-thumbnails AND NOT TARGET Lingmo::FilesThumbnails)
+    add_library(Lingmo::FilesThumbnails ALIAS Lingmo::lingmo-files-thumbnails)
+endif()
+
+check_required_components(LingmoFiles)
