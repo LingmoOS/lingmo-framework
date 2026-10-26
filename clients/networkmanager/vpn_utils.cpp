@@ -101,7 +101,7 @@ static Plugin readNameFile(const std::filesystem::path& path)
 // Read again only when a directory changed: plugins come and go with packages.
 static const std::vector<Plugin>& plugins()
 {
-    PluginCache& cache = ::Lingmo::networkmanager::vpn::cache();
+    PluginCache& cache = ::Lingmo::Networkmanager::vpn::cache();
     std::vector<std::filesystem::file_time_type> stamps;
     for (const std::string& directory : cache.directories) {
         std::error_code error;

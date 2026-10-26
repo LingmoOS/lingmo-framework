@@ -149,7 +149,7 @@ using MirrorGroups = std::vector<std::vector<std::string>>;
 
 } // namespace Lingmo::Display
 
-namespace Lingmo::Base::dbus {
+namespace Lingmo::Base::DBus {
 
 template<typename Tie>
 struct TiedValues;
@@ -178,11 +178,11 @@ struct TiedType
     }
 };
 
-template<> struct Type<display::Mode> : TiedType<display::Mode> {};
-template<> struct Type<display::RequestedMode> : TiedType<display::RequestedMode> {};
-template<> struct Type<display::PhysicalDisplay> : TiedType<display::PhysicalDisplay> {};
-template<> struct Type<display::LogicalDisplay> : TiedType<display::LogicalDisplay> {};
-template<> struct Type<display::DisplayRequest> : TiedType<display::DisplayRequest> {};
-template<> struct Type<display::Placement> : TiedType<display::Placement> {};
+template<> struct Type<Lingmo::Display::Mode> : TiedType<Lingmo::Display::Mode> {};
+template<> struct Type<Lingmo::Display::RequestedMode> : TiedType<Lingmo::Display::RequestedMode> {};
+template<> struct Type<Lingmo::Display::PhysicalDisplay> : TiedType<Lingmo::Display::PhysicalDisplay> {};
+template<> struct Type<Lingmo::Display::LogicalDisplay> : TiedType<Lingmo::Display::LogicalDisplay> {};
+template<> struct Type<Lingmo::Display::DisplayRequest> : TiedType<Lingmo::Display::DisplayRequest> {};
+template<> struct Type<Lingmo::Display::Placement> : TiedType<Lingmo::Display::Placement> {};
 
-} // namespace Lingmo::Base::dbus
+} // namespace Lingmo::Base::DBus
