@@ -18,7 +18,7 @@
 #include "base/timer.h"
 #include "lingmo/audio/audio_object.h"
 
-namespace Lingmo::Base {
+namespace Lingmo::base {
 class EventLoop;
 }
 

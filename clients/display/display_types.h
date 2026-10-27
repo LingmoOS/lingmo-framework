@@ -149,7 +149,7 @@ using MirrorGroups = std::vector<std::vector<std::string>>;
 
 } // namespace Lingmo::Display
 
-namespace Lingmo::Base::DBus {
+namespace Lingmo::base::dbus {
 
 template<typename Tie>
 struct TiedValues;

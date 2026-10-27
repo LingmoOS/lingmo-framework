@@ -14,7 +14,7 @@
 
 #include "lingmo/files/url.h"
 
-namespace Lingmo::Base {
+namespace Lingmo::base {
 class Locale;
 }
 

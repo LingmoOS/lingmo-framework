@@ -20,7 +20,7 @@
 #include "lingmo/networkmanager/vpn_schema.h"
 #include "lingmo/networkmanager/vpn_utils.h"
 
-namespace Lingmo::Base {
+namespace Lingmo::base {
 class Process;
 }
 
