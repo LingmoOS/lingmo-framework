@@ -1,0 +1,145 @@
+// SPDX-FileCopyrightText: 2026 Lingmo OS Team
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#include "lingmo/update/update_status.h"
+
+#include <cstdint>
+
+#include "base/event_loop.h"
+
+using namespace Lingmo::Base;
+
+namespace Lingmo::update {
+
+static constexpr const char* kService   = "org.lingmo.Services";
+static constexpr const char* kPath      = "/org/lingmo/Services/Update";
+static constexpr const char* kInterface = "org.lingmo.Services.Update";
+
+std::shared_ptr<UpdateStatus> UpdateStatus::shared()
+{
+    thread_local std::weak_ptr<UpdateStatus> instance;
+    thread_local base::EventLoop* instanceLoop = nullptr;
+
+    base::EventLoop* loop = base::EventLoop::current();
+    std::shared_ptr<UpdateStatus> status = instance.lock();
+    if (!status || instanceLoop != loop) {
+        status = std::make_shared<UpdateStatus>();
+        instance = status;
+        instanceLoop = loop;
+    }
+    return status;
+}
+
+UpdateStatus::UpdateStatus()
+    : m_service(dbus::Connection::session(), kService, kPath, kInterface)
+{
+    dbus::Connection* bus = m_service.connection();
+    if (!bus)
+        return;
+
+    // Read synchronously so the first frame already has the values.
+    if (const dbus::Reply reply = m_service.getAll(); !reply.isError()) {
+        m_properties = reply.value<dbus::VariantMap>().value_or(dbus::VariantMap());
+        m_available  = true;
+        // Prime the cached progress fields.
+        m_upgradeProgress = value<int32_t>("upgradeProgress", -1);
+        m_upgradePhase    = value<int32_t>("upgradePhase", 0);
+    }
+
+    // stateChanged and property changes trigger a full reload.
+    for (const char* member : {"stateChanged"})
+        m_matches.push_back(m_service.onSignal(member, [this](const dbus::Message&) { reload(); }));
+
+    // upgradeProgress carries two ints (phase, percent) and is handled
+    // separately to avoid a round-trip for every progress tick.
+    m_matches.push_back(m_service.onSignal("upgradeProgress", [this](const dbus::Message& msg) {
+        int32_t phase = 0, percent = 0;
+        msg.read(phase, percent);
+        m_upgradePhase    = phase;
+        m_upgradeProgress = percent;
+        upgradeProgressChanged.emit();
+    }));
+
+    m_watch = bus->watchName(kService, [this](const std::string& owner) {
+        const bool available = !owner.empty();
+        if (available) {
+            reload();
+        } else if (m_available) {
+            m_available = false;
+            m_properties.clear();
+            m_upgradeProgress = -1;
+            m_upgradePhase    = 0;
+            changed.emit();
+        }
+    });
+}
+
+UpdateStatus::~UpdateStatus() = default;
+
+void UpdateStatus::reload()
+{
+    m_reload = m_service.getAllAsync([this](const dbus::Reply& reply) {
+        if (reply.isError())
+            return;
+        m_properties = reply.value<dbus::VariantMap>().value_or(dbus::VariantMap());
+        m_available  = true;
+        // Keep cached progress in sync with the full properties map.
+        m_upgradeProgress = value<int32_t>("upgradeProgress", -1);
+        m_upgradePhase    = value<int32_t>("upgradePhase", 0);
+        changed.emit();
+    });
+}
+
+template<typename T>
+T UpdateStatus::value(const char* name, const T& fallback) const
+{
+    const auto it = m_properties.find(name);
+    return it == m_properties.end() ? fallback : it->second.value<T>(fallback);
+}
+
+// ── property getters ──────────────────────────────────────────────────────────
+
+State UpdateStatus::state() const
+{
+    const int32_t v = value<int32_t>("state", 0);
+    if (v >= 0 && v <= 6) return static_cast<State>(v);
+    return State::Idle;
+}
+
+Channel UpdateStatus::channel() const
+{
+    const int32_t v = value<int32_t>("channel", 0);
+    if (v >= 0 && v <= 2) return static_cast<Channel>(v);
+    return Channel::Stable;
+}
+
+std::string UpdateStatus::newVersion() const    { return value<std::string>("newVersion", {}); }
+int64_t     UpdateStatus::newBuild() const      { return value<int64_t>("newBuild", 0); }
+bool        UpdateStatus::mandatory() const     { return value<bool>("mandatory", false); }
+std::string UpdateStatus::releaseNotes() const  { return value<std::string>("releaseNotes", {}); }
+std::string UpdateStatus::downloadUrl() const   { return value<std::string>("downloadUrl", {}); }
+std::string UpdateStatus::releaseDate() const   { return value<std::string>("releaseDate", {}); }
+std::string UpdateStatus::changelogText() const { return value<std::string>("changelogText", {}); }
+int         UpdateStatus::upgradableCount() const { return int(value<int32_t>("upgradableCount", 0)); }
+std::string UpdateStatus::upgradablePackages() const { return value<std::string>("upgradablePackages", {}); }
+int64_t     UpdateStatus::lastCheckTime() const { return value<int64_t>("lastCheckTime", 0); }
+std::string UpdateStatus::errorLog() const      { return value<std::string>("errorLog", {}); }
+
+// ── methods ───────────────────────────────────────────────────────────────────
+
+void UpdateStatus::checkForUpdate()
+{
+    m_service.send("checkForUpdate");
+}
+
+void UpdateStatus::startUpgrade()
+{
+    m_service.send("startUpgrade");
+}
+
+void UpdateStatus::setChannel(int channel)
+{
+    m_service.send("setChannel", int32_t(channel));
+}
+
+} // namespace Lingmo::update
