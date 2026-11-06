@@ -33,6 +33,7 @@ std::shared_ptr<UpdateStatus> UpdateStatus::shared()
 UpdateStatus::UpdateStatus()
     : m_service(dbus::Connection::session(), kService, kPath, kInterface)
 {
+    m_service.setTimeout(std::chrono::seconds(10));
     dbus::Connection* bus = m_service.connection();
     if (!bus)
         return;
@@ -60,11 +61,15 @@ UpdateStatus::UpdateStatus()
         upgradeProgressChanged.emit();
     }));
 
+    m_matches.push_back(m_service.onPropertiesChanged([this](const dbus::VariantMap&, const std::vector<std::string>&) { reload(); }));
+
     m_watch = bus->watchName(kService, [this](const std::string& owner) {
         const bool available = !owner.empty();
         if (available) {
             reload();
-        } else if (m_available) {
+        } else {
+            m_reload = {}; m_request = {};
+            m_requestPending = false;
             m_available = false;
             m_properties.clear();
             m_upgradeProgress = -1;
@@ -79,8 +84,12 @@ UpdateStatus::~UpdateStatus() = default;
 void UpdateStatus::reload()
 {
     m_reload = m_service.getAllAsync([this](const dbus::Reply& reply) {
-        if (reply.isError())
+        if (reply.isError()) {
+            m_available = false;
+            m_requestError = reply.error().message;
+            changed.emit();
             return;
+        }
         m_properties = reply.value<dbus::VariantMap>().value_or(dbus::VariantMap());
         m_available  = true;
         // Keep cached progress in sync with the full properties map.
@@ -127,19 +136,40 @@ std::string UpdateStatus::errorLog() const      { return value<std::string>("err
 
 // ── methods ───────────────────────────────────────────────────────────────────
 
+void UpdateStatus::beginRequest()
+{
+    m_requestError.clear();
+    m_requestPending = true;
+    changed.emit();
+}
+
+void UpdateStatus::finishRequest(const dbus::Reply& reply)
+{
+    m_requestPending = false;
+    if (reply.isError()) m_requestError = reply.error().message;
+    changed.emit();
+    if (!reply.isError()) reload();
+}
+
 void UpdateStatus::checkForUpdate()
 {
-    m_service.send("checkForUpdate");
+    if (!m_available || m_requestPending) return;
+    beginRequest();
+    m_request = m_service.callAsync("checkForUpdate", [this](const dbus::Reply& reply) { finishRequest(reply); });
 }
 
 void UpdateStatus::startUpgrade()
 {
-    m_service.send("startUpgrade");
+    if (!m_available || m_requestPending) return;
+    beginRequest();
+    m_request = m_service.callAsync("startUpgrade", [this](const dbus::Reply& reply) { finishRequest(reply); });
 }
 
 void UpdateStatus::setChannel(int channel)
 {
-    m_service.send("setChannel", int32_t(channel));
+    if (!m_available || m_requestPending) return;
+    beginRequest();
+    m_request = m_service.callAsync("setChannel", [this](const dbus::Reply& reply) { finishRequest(reply); }, int32_t(channel));
 }
 
 } // namespace Lingmo::update

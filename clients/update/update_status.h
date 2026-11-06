@@ -46,6 +46,8 @@ public:
     UpdateStatus& operator=(const UpdateStatus&) = delete;
 
     bool isAvailable() const { return m_available; }
+    bool isRequestPending() const { return m_requestPending; }
+    const std::string& requestError() const { return m_requestError; }
 
     State state() const;
     Channel channel() const;
@@ -88,6 +90,8 @@ public:
 
 private:
     void reload();
+    void beginRequest();
+    void finishRequest(const base::dbus::Reply& reply);
     template<typename T>
     T value(const char* name, const T& fallback) const;
 
@@ -95,6 +99,9 @@ private:
     base::dbus::NameWatch m_watch;
     std::vector<base::dbus::Match> m_matches;
     base::dbus::PendingCall m_reload;
+    base::dbus::PendingCall m_request;
+    bool m_requestPending = false;
+    std::string m_requestError;
     base::dbus::VariantMap m_properties;
     bool m_available = false;
     // Kept separately so upgradeProgressChanged fires without a full reload.
