@@ -22,6 +22,8 @@ enum class State {
     UpToDate      = 4,
     Upgrading     = 5,
     Error         = 6,
+    // The upgrade completed; the running system needs a restart.
+    RestartRequired = 7,
 };
 
 // The release channels.
@@ -51,6 +53,14 @@ public:
 
     State state() const;
     Channel channel() const;
+
+    // Automatic check schedule.
+    bool autoCheck() const;
+    // 0 = every checkInterval minutes, 1 = daily at checkHour:checkMinute.
+    int checkMode() const;
+    int checkInterval() const;
+    int checkHour() const;
+    int checkMinute() const;
 
     // New OS version info (valid in SystemUpgrade state).
     std::string newVersion() const;
@@ -82,6 +92,10 @@ public:
     void startUpgrade();
     // Change the release channel.
     void setChannel(int channel);
+    // Automatic checks: on or off, interval or daily, and the daily time.
+    void setAutoCheck(bool enabled);
+    void setCheckSchedule(int mode, int minutes);
+    void setCheckTime(int hour, int minute);
 
     // Fired after any property changed, or the service came or went.
     base::Signal<> changed;

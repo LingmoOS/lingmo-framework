@@ -111,7 +111,7 @@ T UpdateStatus::value(const char* name, const T& fallback) const
 State UpdateStatus::state() const
 {
     const int32_t v = value<int32_t>("state", 0);
-    if (v >= 0 && v <= 6) return static_cast<State>(v);
+    if (v >= 0 && v <= 7) return static_cast<State>(v);
     return State::Idle;
 }
 
@@ -120,6 +120,31 @@ Channel UpdateStatus::channel() const
     const int32_t v = value<int32_t>("channel", 0);
     if (v >= 0 && v <= 2) return static_cast<Channel>(v);
     return Channel::Stable;
+}
+
+bool UpdateStatus::autoCheck() const { return value<bool>("autoCheck", true); }
+
+int UpdateStatus::checkMode() const
+{
+    const int32_t v = value<int32_t>("checkMode", 0);
+    return v == 1 ? 1 : 0;
+}
+
+int UpdateStatus::checkInterval() const
+{
+    return int(value<int32_t>("checkInterval", 360));
+}
+
+int UpdateStatus::checkHour() const
+{
+    const int32_t v = value<int32_t>("checkHour", 3);
+    return v < 0 || v > 23 ? 3 : int(v);
+}
+
+int UpdateStatus::checkMinute() const
+{
+    const int32_t v = value<int32_t>("checkMinute", 0);
+    return v < 0 || v > 59 ? 0 : int(v);
 }
 
 std::string UpdateStatus::newVersion() const    { return value<std::string>("newVersion", {}); }
@@ -170,6 +195,33 @@ void UpdateStatus::setChannel(int channel)
     if (!m_available || m_requestPending) return;
     beginRequest();
     m_request = m_service.callAsync("setChannel", [this](const dbus::Reply& reply) { finishRequest(reply); }, int32_t(channel));
+}
+
+void UpdateStatus::setAutoCheck(bool enabled)
+{
+    if (!m_available || m_requestPending) return;
+    beginRequest();
+    m_request = m_service.callAsync("setAutoCheck",
+                                    [this](const dbus::Reply& reply) { finishRequest(reply); },
+                                    enabled);
+}
+
+void UpdateStatus::setCheckSchedule(int mode, int minutes)
+{
+    if (!m_available || m_requestPending) return;
+    beginRequest();
+    m_request = m_service.callAsync("setCheckSchedule",
+                                    [this](const dbus::Reply& reply) { finishRequest(reply); },
+                                    int32_t(mode), int32_t(minutes));
+}
+
+void UpdateStatus::setCheckTime(int hour, int minute)
+{
+    if (!m_available || m_requestPending) return;
+    beginRequest();
+    m_request = m_service.callAsync("setCheckTime",
+                                    [this](const dbus::Reply& reply) { finishRequest(reply); },
+                                    int32_t(hour), int32_t(minute));
 }
 
 } // namespace Lingmo::update
