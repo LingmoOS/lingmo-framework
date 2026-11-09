@@ -151,7 +151,6 @@ std::string UpdateStatus::newVersion() const    { return value<std::string>("new
 int64_t     UpdateStatus::newBuild() const      { return value<int64_t>("newBuild", 0); }
 bool        UpdateStatus::mandatory() const     { return value<bool>("mandatory", false); }
 std::string UpdateStatus::releaseNotes() const  { return value<std::string>("releaseNotes", {}); }
-std::string UpdateStatus::downloadUrl() const   { return value<std::string>("downloadUrl", {}); }
 std::string UpdateStatus::releaseDate() const   { return value<std::string>("releaseDate", {}); }
 std::string UpdateStatus::changelogText() const { return value<std::string>("changelogText", {}); }
 int         UpdateStatus::upgradableCount() const { return int(value<int32_t>("upgradableCount", 0)); }

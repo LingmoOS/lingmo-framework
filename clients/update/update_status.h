@@ -67,9 +67,8 @@ public:
     int64_t newBuild() const;
     bool mandatory() const;
     std::string releaseNotes() const;
-    std::string downloadUrl() const;
     std::string releaseDate() const;
-    // Markdown changelog fetched from releases.json.
+    // HTML summary from the update API.
     std::string changelogText() const;
 
     // apt upgrade info.
