@@ -1,3 +1,9 @@
+lingmo-framework (5.0.2+lingmo5u3) unstable; urgency=medium
+
+  * Expose automatic update-check scheduling and drop the unused download URL.
+
+ -- Lingmo OS Team <team@lingmo.org>  Tue, 10 Nov 2026 14:29:04 +0800
+
 lingmo-framework (5.0.2+lingmo5u2) unstable; urgency=medium
 
   * fix: acknowledge update requests and synchronize service state.
