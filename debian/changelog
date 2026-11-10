@@ -1,4 +1,4 @@
-lingmo-framework (5.0.2+lingmo5u3) unstable; urgency=medium
+lingmo-framework (5.0.3+lingmo5u1) unstable; urgency=medium
 
   * Expose automatic update-check scheduling and drop the unused download URL.
 
