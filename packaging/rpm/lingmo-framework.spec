@@ -1,5 +1,5 @@
 Name:           lingmo-framework
-Version:        5.0.6
+Version:        5.0.5
 Release:        1.lingmo5u1%{?dist}
 Summary:        Lingmo desktop framework clients
 License:        GPL-3.0-or-later
@@ -46,5 +46,5 @@ framework clients.
 %{_libdir}/cmake/LingmoFramework/
 
 %changelog
-* Mon Nov 16 2026 Lingmo OS Team <team@lingmo.org> - 5.0.6-1.lingmo5u1
-- Use the validated RPM source workflow structure.
+* Mon Nov 16 2026 Lingmo OS Team <team@lingmo.org> - 5.0.5-1.lingmo5u1
+- Make the RPM source workflow independent from the runner RPM database.
