@@ -1,44 +1,79 @@
-name: Build and upload RPM sources
+name: Build RPM source package
+
+permissions: write-all
+
 on:
   push:
     branches: [ main ]
-    tags: [ "v*.*.*" ]
+    tags:
+      - "v*.*.*"
   pull_request:
     branches: [ main ]
-permissions: write-all
+
 jobs:
   rpm-source:
+    name: RPM source package
     runs-on: ubuntu-latest
     steps:
-      - name: Install tooling
-        run: sudo apt-get update && sudo apt-get install -y git rpm devscripts debhelper curl
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - name: Build source files
+      - name: Install RPM tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git rpm devscripts debhelper curl
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build source tarball and SRPM
+        shell: bash
         run: |
           set -euo pipefail
-          v="$(awk '$1 == "Version:" {print $2; exit}' packaging/rpm/lingmo-framework.spec)"
-          mkdir -p rpmbuild/SOURCES rpmbuild/SPECS rpm-obs-source
-          git archive --format=tar.gz --prefix="lingmo-framework-${v}/" "$GITHUB_SHA" > "rpmbuild/SOURCES/lingmo-framework-${v}.tar.gz"
-          cp packaging/rpm/lingmo-framework.spec rpmbuild/SPECS/
-          # OBS resolves BuildRequires. GitHub's Ubuntu runner does not carry
-          # the target RPM development packages, so only create the SRPM here.
-          rpmbuild -bs --nodeps --define "_topdir $PWD/rpmbuild" rpmbuild/SPECS/lingmo-framework.spec
+          rpm_version="$(awk '$1 == "Version:" { print $2; exit }' packaging/rpm/lingmo-framework.spec)"
+          test -n "$rpm_version"
+          top="$PWD/rpmbuild"
+          mkdir -p "$top/SOURCES" "$top/SPECS" "$top/SRPMS"
+          git archive --format=tar.gz --prefix="lingmo-framework-${rpm_version}/" \
+            "${GITHUB_SHA}" > "$top/SOURCES/lingmo-framework-${rpm_version}.tar.gz"
+          cp packaging/rpm/lingmo-framework.spec "$top/SPECS/"
+          rpmbuild -bs --nodeps --define "_topdir $top" "$top/SPECS/lingmo-framework.spec"
           dpkg-buildpackage -S -us -uc -d
-          cp "rpmbuild/SOURCES/lingmo-framework-${v}.tar.gz" packaging/rpm/lingmo-framework.spec rpm-obs-source/
+          mkdir -p rpm-source-output rpm-obs-source
+          cp "$top/SOURCES/lingmo-framework-${rpm_version}.tar.gz" rpm-source-output/
+          cp "$top/SPECS/lingmo-framework.spec" rpm-source-output/
+          cp "$top/SRPMS/"*.src.rpm rpm-source-output/
+          cp "$top/SOURCES/lingmo-framework-${rpm_version}.tar.gz" rpm-obs-source/
+          cp "$top/SPECS/lingmo-framework.spec" rpm-obs-source/
           cp ../lingmo-framework_*.dsc ../lingmo-framework_*.tar.* rpm-obs-source/
-      - name: Upload sources to OBS
+          cp ../lingmo-framework_*.dsc ../lingmo-framework_*.tar.* rpm-source-output/
+
+      - name: Upload RPM source package
+        uses: actions/upload-artifact@v4
+        with:
+          name: lingmo-framework-rpm-source
+          path: rpm-source-output/
+          if-no-files-found: error
+
+      - name: Upload RPM sources to OBS
         if: github.event_name != 'pull_request'
         uses: LingmoOS/action-upload-to-obs@0.0.4
         with:
           remove-old-sources: true
-          obs-package-name: lingmo-framework
-          obs-project-name: home:LingmoOS
+          obs-package-name: 'lingmo-framework'
+          obs-project-name: 'home:LingmoOS'
           obs-user-name: ${{ secrets.OBS_USERNAME }}
           obs-password: ${{ secrets.OBS_TOKEN }}
-          obs-instance-url: https://api.opensuse.org
-          local-package-dir: ./rpm-obs-source
+          obs-instance-url: 'https://api.opensuse.org'
+          local-package-dir: './rpm-obs-source'
+
       - name: Upload RPM spec to OBS
         if: github.event_name != 'pull_request'
-        env: { OBS_USERNAME: ${{ secrets.OBS_USERNAME }}, OBS_TOKEN: ${{ secrets.OBS_TOKEN }} }
-        run: curl --fail --user "$OBS_USERNAME:$OBS_TOKEN" --upload-file packaging/rpm/lingmo-framework.spec 'https://api.opensuse.org/source/home:LingmoOS/lingmo-framework/lingmo-framework.spec?cmd=commit&meta=0&keeplink=0&comment=Upload%20RPM%20spec'
+        env:
+          OBS_USERNAME: ${{ secrets.OBS_USERNAME }}
+          OBS_TOKEN: ${{ secrets.OBS_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            --user "$OBS_USERNAME:$OBS_TOKEN" \
+            --upload-file packaging/rpm/lingmo-framework.spec \
+            'https://api.opensuse.org/source/home:LingmoOS/lingmo-framework/lingmo-framework.spec?cmd=commit&meta=0&keeplink=0&comment=Upload%20RPM%20spec'
